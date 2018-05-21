@@ -1,3 +1,4 @@
+import functools
 # The reward we give to miners (for creating a new block)
 MINING_REWARD = 10
 
@@ -12,14 +13,15 @@ blockchain = [genesis_block]
 # Unhandled transactions
 open_transactions = []
 # We are the owner of this blockchain node, hence this is our identifier (e.g. for sending coins)
-owner = 'noone'
+owner = 'Max'
 # Registered participants: Ourself + other people sending/ receiving coins
-participants = {'noone'}
+participants = {'Max'}
+
 
 
 def hash_block(block):
     """Hashes a block and returns a string representation of it.
-
+    
     Arguments:
         :block: The block that should be hashed.
     """
@@ -39,19 +41,11 @@ def get_balance(participant):
     # This fetches sent amounts of open transactions (to avoid double spending)
     open_tx_sender = [tx['amount'] for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_sender)
-    amount_sent = 0
-    # Calculate the total amount of coins sent
-    for tx in tx_sender:
-        if len(tx) > 0:
-            amount_sent += tx[0]
+    amount_sent = functools.reduce(lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0, tx_sender, 0)
     # This fetches received coin amounts of transactions that were already included in blocks of the blockchain
     # We ignore open transactions here because you shouldn't be able to spend coins before the transaction was confirmed + included in a block
-    tx_recipient = [[tx['amount'] for tx in block['transactions'] if tx['recipient'] == participant] for block in
-                    blockchain]
-    amount_received = 0
-    for tx in tx_recipient:
-        if len(tx) > 0:
-            amount_received += tx[0]
+    tx_recipient = [[tx['amount'] for tx in block['transactions'] if tx['recipient'] == participant] for block in blockchain]
+    amount_received = functools.reduce(lambda tx_sum, tx_amt: tx_sum + tx_amt[0] if len(tx_amt) > 0 else 0, tx_recipient, 0)
     # Return the total balance
     return amount_received - amount_sent
 
@@ -71,7 +65,6 @@ def verify_transaction(transaction):
     """
     sender_balance = get_balance(transaction['sender'])
     return sender_balance >= transaction['amount']
-
 
 # This function accepts two arguments.
 # One required one (transaction_amount) and one optional one (last_transaction)
@@ -204,7 +197,7 @@ while waiting_for_input:
             blockchain[0] = {
                 'previous_hash': '',
                 'index': 0,
-                'transactions': [{'sender': 'someone', 'recipient': 'noone', 'amount': 100.0}]
+                'transactions': [{'sender': 'Chris', 'recipient': 'Max', 'amount': 100.0}]
             }
     elif user_choice == 'q':
         # This will lead to the loop to exist because it's running condition becomes False
@@ -216,8 +209,9 @@ while waiting_for_input:
         print('Invalid blockchain!')
         # Break out of the loop
         break
-    print('Balance of {}: {:6.2f}'.format('noone', get_balance('noone')))
+    print('Balance of {}: {:6.2f}'.format('Max', get_balance('Max')))
 else:
     print('User left!')
+
 
 print('Done!')
